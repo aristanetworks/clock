@@ -1,4 +1,4 @@
-clock [![Build Status](https://drone.io/github.com/benbjohnson/clock/status.png)](https://drone.io/github.com/benbjohnson/clock/latest) [![Coverage Status](https://coveralls.io/repos/benbjohnson/clock/badge.png?branch=master)](https://coveralls.io/r/benbjohnson/clock?branch=master) [![GoDoc](https://godoc.org/github.com/benbjohnson/clock?status.png)](https://godoc.org/github.com/benbjohnson/clock) ![Project status](http://img.shields.io/status/experimental.png?color=red)
+clock [![Build Status](https://drone.io/github.com/aristanetworks/clock/status.png)](https://drone.io/github.com/aristanetworks/clock/latest) [![Coverage Status](https://coveralls.io/repos/aristanetworks/clock/badge.png?branch=master)](https://coveralls.io/r/aristanetworks/clock?branch=master) [![GoDoc](https://godoc.org/github.com/aristanetworks/clock?status.png)](https://godoc.org/github.com/aristanetworks/clock) ![Project status](http://img.shields.io/status/experimental.png?color=red)
 =====
 NOTE:  This README has not yet been updated to reflect the fixes/changes.  Please refer to the source code in the meantime.
 
@@ -17,7 +17,7 @@ Your application can maintain a `Clock` variable that will allow realtime and
 mock clocks to be interchangable. For example, if you had an `Application` type:
 
 ```go
-import "github.com/benbjohnson/clock"
+import "github.com/aristanetworks/clock"
 
 type Application struct {
 	Clock clock.Clock
@@ -44,7 +44,7 @@ In your tests, you will want to use a `Mock` clock:
 import (
 	"testing"
 
-	"github.com/benbjohnson/clock"
+	"github.com/aristanetworks/clock"
 )
 
 func TestApplication_DoSomething(t *testing.T) {
