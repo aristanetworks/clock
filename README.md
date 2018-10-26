@@ -1,4 +1,4 @@
-clock [![Build Status](https://drone.io/github.com/benbjohnson/clock/status.png)](https://drone.io/github.com/benbjohnson/clock/latest) [![Coverage Status](https://coveralls.io/repos/benbjohnson/clock/badge.png?branch=master)](https://coveralls.io/r/benbjohnson/clock?branch=master) [![GoDoc](https://godoc.org/github.com/benbjohnson/clock?status.png)](https://godoc.org/github.com/benbjohnson/clock) ![Project status](http://img.shields.io/status/experimental.png?color=red)
+clock [![Build Status](https://drone.io/github.com/aristanetworks/clock/status.png)](https://drone.io/github.com/aristanetworks/clock/latest) [![Coverage Status](https://coveralls.io/repos/aristanetworks/clock/badge.png?branch=master)](https://coveralls.io/r/aristanetworks/clock?branch=master) [![GoDoc](https://godoc.org/github.com/aristanetworks/clock?status.png)](https://godoc.org/github.com/aristanetworks/clock) ![Project status](http://img.shields.io/status/experimental.png?color=red)
 =====
 NOTE:  This README has not yet been updated to reflect the fixes/changes.  Please refer to the source code in the meantime.
 
@@ -17,7 +17,7 @@ Your application can maintain a `Clock` variable that will allow realtime and
 mock clocks to be interchangable. For example, if you had an `Application` type:
 
 ```go
-import "github.com/benbjohnson/clock"
+import "github.com/aristanetworks/clock"
 
 type Application struct {
 	Clock clock.Clock
@@ -44,61 +44,35 @@ In your tests, you will want to use a `Mock` clock:
 import (
 	"testing"
 
-	"github.com/benbjohnson/clock"
+	"github.com/aristanetworks/clock/mock"
 )
 
 func TestApplication_DoSomething(t *testing.T) {
-	mock := clock.NewMock()
+	mock := mock.NewMockClock()
 	app := Application{Clock: mock}
 	...
 }
 ```
 
 Now that you've initialized your application to use the mock clock, you can
-adjust the time programmatically. The mock clock always starts from the Unix
-epoch (midnight, Jan 1, 1970 UTC).
+use the standard gomokc methods to mock any call for any method.
 
 
-### Controlling time
+### Examples
 
-The mock clock provides the same functions that the standard library's `time`
-package provides. For example, to find the current time, you use the `Now()`
-function:
+#### fake Sleep
 
 ```go
-mock := clock.NewMock()
+mock := clock.NewMockClock(ctrl)
 
-// Find the current time.
-mock.Now().UTC() // 1970-01-01 00:00:00 +0000 UTC
-
-// Move the clock forward.
-mock.Add(2 * time.Hour)
-
-// Check the time again. It's 2 hours later!
-mock.Now().UTC() // 1970-01-01 02:00:00 +0000 UTC
+mock.EXPECT().Sleep(gomock.Any()).AnyTimes()
 ```
 
-Timers and Tickers are also controlled by this same mock clock. They will only
-execute when the clock is moved forward:
+#### Return a fake time
 
+```go
+mock := clock.NewMockClock(ctrl)
+
+now := time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
+mock.EXPECT().Now().Return(now).AnyTimes()
 ```
-mock := clock.NewMock()
-count := 0
-
-// Kick off a timer to increment every 1 mock second.
-go func() {
-    ticker := clock.Ticker(1 * time.Second)
-    for {
-        <-ticker.C
-        count++
-    }
-}()
-
-// Move the clock forward 10 second.
-mock.Add(10 * time.Second)
-
-// This prints 10.
-fmt.Println(count)
-```
-
-
