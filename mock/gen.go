@@ -9,4 +9,4 @@
 
 package mock
 
-//go:generate mockgen -destination=clock.gen.go -package=mock github.com/aristanetworks/clock Clock
+//go:generate mockgen -destination=clock.gen.go -package=mock github.com/aristanetworks/clock Clock,Ticker,Timer
