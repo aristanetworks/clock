@@ -48,7 +48,7 @@ import (
 )
 
 func TestApplication_DoSomething(t *testing.T) {
-	mock := mock.NewMockClock()
+	mock := mock.NewMockClock(ctrl)
 	app := Application{Clock: mock}
 	...
 }
