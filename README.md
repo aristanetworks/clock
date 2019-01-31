@@ -55,7 +55,7 @@ func TestApplication_DoSomething(t *testing.T) {
 ```
 
 Now that you've initialized your application to use the mock clock, you can
-use the standard gomokc methods to mock any call for any method.
+use the standard gomock methods to mock any call for any method.
 
 
 ### Examples
