@@ -1,4 +1,4 @@
-clock [![Build Status](https://drone.io/github.com/aristanetworks/clock/status.png)](https://drone.io/github.com/aristanetworks/clock/latest) [![Coverage Status](https://coveralls.io/repos/aristanetworks/clock/badge.png?branch=master)](https://coveralls.io/r/aristanetworks/clock?branch=master) [![GoDoc](https://godoc.org/github.com/aristanetworks/clock?status.png)](https://godoc.org/github.com/aristanetworks/clock) ![Project status](http://img.shields.io/status/experimental.png?color=red)
+clock [![Coverage Status](https://coveralls.io/repos/aristanetworks/clock/badge.png?branch=master)](https://coveralls.io/r/aristanetworks/clock?branch=master) [![GoDoc](https://godoc.org/github.com/aristanetworks/clock?status.png)](https://godoc.org/github.com/aristanetworks/clock) ![Project status](http://img.shields.io/status/experimental.png?color=red)
 =====
 NOTE:  This README has not yet been updated to reflect the fixes/changes.  Please refer to the source code in the meantime.
 
