@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/aristanetworks/clock"
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 )
 
 // TestMocks validates that the mock clock is in sync with the current
