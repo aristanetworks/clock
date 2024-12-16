@@ -8,17 +8,21 @@ import (
 )
 
 // delay is the extra delay use to ensure that enough time has passed
-const delay = +time.Millisecond
+const delay = 10 * time.Millisecond
 
 // Ensure that WithDeadline is cancelled when deadline exceeded.
 func TestMock_WithDeadline(t *testing.T) {
 	c := New()
-	ctx, _ := ContextWithDeadline(context.Background(), c, c.Now().Add(time.Second))
+	cause := errors.New("example cause")
+	ctx, _ := ContextWithDeadlineCause(context.Background(), c, c.Now().Add(time.Second), cause)
 	time.Sleep(time.Second + delay)
 	select {
 	case <-ctx.Done():
 		if !errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			t.Error("invalid type of error returned when deadline exceeded")
+		}
+		if context.Cause(ctx) != cause {
+			t.Error("cause does not match expected cause")
 		}
 	default:
 		t.Error("context is not cancelled when deadline exceeded")
@@ -28,13 +32,17 @@ func TestMock_WithDeadline(t *testing.T) {
 // Ensure that WithDeadline does nothing when the deadline is later than the current deadline.
 func TestMock_WithDeadlineLaterThanCurrent(t *testing.T) {
 	c := New()
-	ctx, _ := ContextWithDeadline(context.Background(), c, c.Now().Add(time.Second))
-	ctx, _ = ContextWithDeadline(ctx, c, c.Now().Add(10*time.Second))
+	cause := errors.New("example cause")
+	ctx, _ := ContextWithDeadlineCause(context.Background(), c, c.Now().Add(time.Second), cause)
+	ctx, _ = ContextWithDeadlineCause(ctx, c, c.Now().Add(10*time.Second), cause)
 	time.Sleep(time.Second + delay)
 	select {
 	case <-ctx.Done():
 		if !errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			t.Error("invalid type of error returned when deadline exceeded")
+		}
+		if context.Cause(ctx) != cause {
+			t.Error("cause does not match expected cause")
 		}
 	default:
 		t.Error("context is not cancelled when deadline exceeded")

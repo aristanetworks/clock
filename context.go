@@ -8,15 +8,29 @@ import (
 )
 
 func ContextWithTimeout(parent context.Context, clock Clock, timeout time.Duration) (context.Context, context.CancelFunc) {
-	return ContextWithDeadline(parent, clock, clock.Now().Add(timeout))
+	return ContextWithTimeoutCause(parent, clock, timeout, nil)
+}
+
+func ContextWithTimeoutCause(parent context.Context, clock Clock, timeout time.Duration, cause error) (context.Context, context.CancelFunc) {
+	return ContextWithDeadlineCause(parent, clock, clock.Now().Add(timeout), cause)
 }
 
 func ContextWithDeadline(parent context.Context, clock Clock, deadline time.Time) (context.Context, context.CancelFunc) {
-	if cur, ok := parent.Deadline(); ok && cur.Before(deadline) {
-		// The current deadline is already sooner than the new one.
-		return context.WithCancel(parent)
+	return ContextWithDeadlineCause(parent, clock, deadline, nil)
+}
+
+func ContextWithDeadlineCause(parent context.Context, clock Clock, deadline time.Time, cause error) (context.Context, context.CancelFunc) {
+	// using WithCancelCause to facilitate adding a Cause
+	wrapped, cancelFunc := context.WithCancelCause(parent)
+	ctx := &timerCtx{
+		clock:   clock,
+		Context: wrapped,
+		parent:  parent,
+		cancelFunc: func() {
+			cancelFunc(cause)
+		},
+		deadline: deadline,
 	}
-	ctx := &timerCtx{clock: clock, parent: parent, deadline: deadline, done: make(chan struct{})}
 	propagateCancel(parent, ctx)
 	dur := deadline.Sub(clock.Now())
 	if dur <= 0 {
@@ -25,7 +39,7 @@ func ContextWithDeadline(parent context.Context, clock Clock, deadline time.Time
 	}
 	ctx.Lock()
 	defer ctx.Unlock()
-	if ctx.err == nil {
+	if ctx.Err() == nil {
 		ctx.timer = clock.AfterFunc(dur, func() {
 			ctx.cancel(context.DeadlineExceeded)
 		})
@@ -49,14 +63,14 @@ func propagateCancel(parent context.Context, child *timerCtx) {
 
 type timerCtx struct {
 	sync.Mutex
+	context.Context // wrapped cancelCtx
 
-	clock    Clock
-	parent   context.Context
-	deadline time.Time
-	done     chan struct{}
-
-	err   error
-	timer Timer
+	clock      Clock
+	parent     context.Context
+	cancelFunc context.CancelFunc
+	deadline   time.Time
+	err        error
+	timer      Timer
 }
 
 func (c *timerCtx) cancel(err error) {
@@ -66,7 +80,7 @@ func (c *timerCtx) cancel(err error) {
 		return // already canceled
 	}
 	c.err = err
-	close(c.done)
+	c.cancelFunc()
 	if c.timer != nil {
 		c.timer.Stop()
 		c.timer = nil
@@ -75,11 +89,22 @@ func (c *timerCtx) cancel(err error) {
 
 func (c *timerCtx) Deadline() (deadline time.Time, ok bool) { return c.deadline, true }
 
-func (c *timerCtx) Done() <-chan struct{} { return c.done }
+func (c *timerCtx) Err() error {
+	if c.err != nil {
+		return c.err
+	} else {
+		// parent may be canceled
+		return c.parent.Err()
+	}
+}
 
-func (c *timerCtx) Err() error { return c.err }
-
-func (c *timerCtx) Value(key interface{}) interface{} { return c.parent.Value(key) }
+func (c *timerCtx) Value(key any) any {
+	parentValue := c.parent.Value(key)
+	if parentValue != nil {
+		return parentValue
+	}
+	return c.Context.Value(key)
+}
 
 func (c *timerCtx) String() string {
 	return fmt.Sprintf("clock.WithDeadline(%s [%s])", c.deadline, c.deadline.Sub(c.clock.Now()))
