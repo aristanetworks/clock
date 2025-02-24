@@ -3,6 +3,7 @@ package clock
 import (
 	"context"
 	"errors"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -70,12 +71,13 @@ func TestMock_WithDeadlineCancelledWithParent(t *testing.T) {
 	parent, cancel := context.WithCancel(context.Background())
 	ctx, _ := ContextWithDeadline(parent, c, c.Now().Add(time.Second))
 	cancel()
+	runtime.Gosched()
 	select {
 	case <-ctx.Done():
 		if !errors.Is(ctx.Err(), context.Canceled) {
-			t.Error("invalid type of error returned after cancellation")
+			t.Errorf("invalid type of error returned after cancellation: %v", ctx.Err())
 		}
-	case <-time.After(time.Second + delay):
+	default:
 		t.Error("context is not cancelled when parent context is cancelled")
 	}
 }

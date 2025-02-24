@@ -21,7 +21,10 @@ func ContextWithDeadline(parent context.Context, clock Clock, deadline time.Time
 
 func ContextWithDeadlineCause(parent context.Context, clock Clock, deadline time.Time, cause error) (context.Context, context.CancelFunc) {
 	// using WithCancelCause to facilitate adding a Cause
-	wrapped, cancelFunc := context.WithCancelCause(parent)
+	// delegating the actual context logic to a cancel context, using the background context here
+	// since using the parent thread can cause this context to cancel before the timeCtx has been
+	// populated with an error/cause
+	wrapped, cancelFunc := context.WithCancelCause(context.Background())
 	ctx := &timerCtx{
 		clock:   clock,
 		Context: wrapped,
@@ -37,8 +40,6 @@ func ContextWithDeadlineCause(parent context.Context, clock Clock, deadline time
 		ctx.cancel(context.DeadlineExceeded) // deadline has already passed
 		return ctx, func() {}
 	}
-	ctx.Lock()
-	defer ctx.Unlock()
 	if ctx.Err() == nil {
 		ctx.timer = clock.AfterFunc(dur, func() {
 			ctx.cancel(context.DeadlineExceeded)
@@ -90,12 +91,9 @@ func (c *timerCtx) cancel(err error) {
 func (c *timerCtx) Deadline() (deadline time.Time, ok bool) { return c.deadline, true }
 
 func (c *timerCtx) Err() error {
-	if c.err != nil {
-		return c.err
-	} else {
-		// parent may be canceled
-		return c.parent.Err()
-	}
+	c.Lock()
+	defer c.Unlock()
+	return c.err
 }
 
 func (c *timerCtx) Value(key any) any {
